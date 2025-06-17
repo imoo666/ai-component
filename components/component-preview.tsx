@@ -1,15 +1,15 @@
-"use client"
+"use client";
 
-import { Sandpack } from "@codesandbox/sandpack-react"
-import type { Component } from "@/lib/types"
+import { Sandpack } from "@codesandbox/sandpack-react";
+import type { Component } from "@/lib/types";
 
 interface ComponentPreviewProps {
-  component: Component
+  component: Component;
 }
 
 export function ComponentPreview({ component }: ComponentPreviewProps) {
   const files = {
-    "/App.js": {
+    "/App.tsx": {
       code:
         component.code ||
         `export default function App() {
@@ -21,18 +21,19 @@ export function ComponentPreview({ component }: ComponentPreviewProps) {
         )
       }`,
     },
-  }
+  };
 
   return (
     <div className="w-full h-full min-h-[400px]">
       <Sandpack
-        template="react"
+        template="react-ts"
         files={files}
         options={{
           wrapContent: true,
           editorHeight: 398,
+          showLineNumbers: true,
         }}
       />
     </div>
-  )
+  );
 }

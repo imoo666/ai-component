@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,17 +14,15 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Send, Bot, Home } from "lucide-react";
-import { ChatMessage } from "@/components/chat-message";
+import { streamFromDify } from "@/lib/dify";
+import { ChatMessage } from "@/components/chat/ChatMessage";
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
-  hasComponent?: boolean;
-  componentCode?: string;
   isStreaming?: boolean;
-  isGenerating?: boolean;
   type?: "chat" | "component";
 }
 
@@ -34,7 +32,7 @@ export default function CreatePage() {
       id: "welcome",
       role: "assistant",
       content:
-        "你好！我是 AI 组件生成助手。我可以帮你生成 React 组件或回答你的问题。请告诉我你需要什么！",
+        "你好！我是 AI 组件生成助手，我可以帮你生成 React 组件，请告诉我你需要什么！",
       timestamp: new Date(),
       type: "chat",
     },
@@ -42,6 +40,7 @@ export default function CreatePage() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [chatId, setChatId] = useState<string>();
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -54,126 +53,87 @@ export default function CreatePage() {
     }
   }, [messages]);
 
-  const detectMessageType = (input: string): "chat" | "component" => {
-    const componentKeywords = [
-      "组件",
-      "component",
-      "按钮",
-      "表单",
-      "卡片",
-      "导航",
-      "布局",
-      "创建",
-      "生成",
-      "写一个",
-      "做一个",
-    ];
-    return componentKeywords.some((keyword) =>
-      input.toLowerCase().includes(keyword)
-    )
-      ? "component"
-      : "chat";
-  };
-
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
-    const messageType = detectMessageType(input);
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: input.trim(),
-      timestamp: new Date(),
-      type: messageType,
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
+    const question = input.trim();
     setInput("");
     setIsLoading(true);
 
-    if (messageType === "component") {
-      const loadingMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: "",
+    appendUserMessage(question);
+    appendAssistantStream();
+
+    await streamFromDify({
+      query: question,
+      chatId,
+      onDelta: appendDelta,
+      onDone: markStreamDone,
+      onError: showStreamError,
+      setChatId,
+      changeToComponentMode: () => {
+        setMessages((prev) => [
+          ...prev.slice(0, -1),
+          {
+            ...prev.at(-1)!,
+            type: "component",
+          },
+        ]);
+      },
+    });
+
+    setIsLoading(false);
+  };
+
+  const appendUserMessage = (text: string) => {
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        role: "user",
+        content: text,
         timestamp: new Date(),
-        isGenerating: true,
-        type: "component",
-      };
+        type: "chat",
+      },
+    ]);
+  };
 
-      setMessages((prev) => [...prev, loadingMessage]);
-
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        const componentCode = generateComponentCode();
-
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === loadingMessage.id
-              ? {
-                  ...msg,
-                  content: "",
-                  hasComponent: true,
-                  componentCode,
-                  isGenerating: false,
-                }
-              : msg
-          )
-        );
-      } catch (error) {
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === loadingMessage.id
-              ? {
-                  ...msg,
-                  content: "抱歉，生成组件时出现错误，请重试。",
-                  isGenerating: false,
-                  type: "chat",
-                }
-              : msg
-          )
-        );
-      }
-    } else {
-      const streamingMessage: Message = {
-        id: (Date.now() + 1).toString(),
+  const appendAssistantStream = () => {
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
         role: "assistant",
         content: "",
         timestamp: new Date(),
         isStreaming: true,
         type: "chat",
-      };
-
-      setMessages((prev) => [...prev, streamingMessage]);
-      const response = generateChatResponse(input);
-      await simulateStreamingResponse(response, streamingMessage.id);
-    }
-
-    setIsLoading(false);
+      },
+    ]);
   };
 
-  const simulateStreamingResponse = async (
-    fullResponse: string,
-    messageId: string
-  ) => {
-    const words = fullResponse.split("");
-    let currentContent = "";
+  const appendDelta = (delta: string) => {
+    setMessages((prev) => {
+      const last = prev.at(-1)!;
+      return [...prev.slice(0, -1), { ...last, content: last.content + delta }];
+    });
+  };
 
-    for (let i = 0; i < words.length; i++) {
-      currentContent += words[i];
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === messageId ? { ...msg, content: currentContent } : msg
-        )
-      );
-      await new Promise((resolve) => setTimeout(resolve, 20));
-    }
+  const markStreamDone = () => {
+    setMessages((prev) => {
+      const last = prev.at(-1)!;
+      return [...prev.slice(0, -1), { ...last, isStreaming: false }];
+    });
+  };
 
-    setMessages((prev) =>
-      prev.map((msg) =>
-        msg.id === messageId ? { ...msg, isStreaming: false } : msg
-      )
-    );
+  const showStreamError = () => {
+    setMessages((prev) => [
+      ...prev.slice(0, -1),
+      {
+        ...prev.at(-1)!,
+        content: "⚠️ AI 出错了，请稍后重试。",
+        isStreaming: false,
+      },
+    ]);
   };
 
   return (
@@ -215,7 +175,7 @@ export default function CreatePage() {
                 placeholder="输入你的问题或描述想要的组件..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleSend()}
+                onKeyDown={(e) => e.key === "Enter" && handleSend()}
                 disabled={isLoading}
                 className="flex-1"
               />
