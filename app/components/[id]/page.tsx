@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { ComponentPreview } from "@/components/component-preview"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { ComponentPreview } from "@/components/component-preview";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -12,52 +12,52 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Calendar, User, Home, Trash2, Copy } from "lucide-react"
-import { getComponentById, deleteComponent } from "@/lib/data"
-import { toast } from "sonner"
-import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
-import type { Component } from "@/lib/types"
+} from "@/components/ui/breadcrumb";
+import { Calendar, User, Home, Trash2, Copy } from "lucide-react";
+import { getComponentById, deleteComponent } from "@/lib/data";
+import { toast } from "sonner";
+import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog";
+import type { Component } from "@/lib/types";
 
 interface ComponentPageProps {
-  params: { id: string }
+  params: { id: string };
 }
 
 export default function ComponentPage({ params }: ComponentPageProps) {
-  const [component, setComponent] = useState<Component | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [deleting, setDeleting] = useState(false)
-  const router = useRouter()
+  const [component, setComponent] = useState<Component | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const loadComponent = async () => {
       try {
-        const data = await getComponentById(params.id)
-        setComponent(data)
+        const data = await getComponentById(params.id);
+        setComponent(data);
       } catch (error) {
-        console.error("Failed to load component:", error)
+        console.error("Failed to load component:", error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-    loadComponent()
-  }, [params.id])
+    };
+    loadComponent();
+  }, [params.id]);
 
   const handleConfirmDelete = async () => {
-    if (!component) return
-    setDeleting(true)
+    if (!component) return;
+    setDeleting(true);
     try {
-      await deleteComponent(component.id)
-      toast.success("组件删除成功")
-      router.push("/")
+      await deleteComponent(component.id);
+      toast.success("组件删除成功");
+      router.push("/");
     } catch (error) {
-      toast.error("删除失败，请重试")
+      toast.error("删除失败，请重试");
     } finally {
-      setDeleting(false)
-      setShowDeleteDialog(false)
+      setDeleting(false);
+      setShowDeleteDialog(false);
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -70,7 +70,7 @@ export default function ComponentPage({ params }: ComponentPageProps) {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (!component) {
@@ -80,7 +80,7 @@ export default function ComponentPage({ params }: ComponentPageProps) {
           <p className="text-muted-foreground">组件未找到</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -105,7 +105,9 @@ export default function ComponentPage({ params }: ComponentPageProps) {
           <header className="flex items-start justify-between">
             <div className="space-y-4">
               <h1 className="text-3xl font-bold">{component.name}</h1>
-              <p className="text-lg text-muted-foreground">{component.description}</p>
+              <p className="text-lg text-muted-foreground">
+                {component.description}
+              </p>
               <div className="flex items-center gap-8 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4" />
@@ -135,12 +137,16 @@ export default function ComponentPage({ params }: ComponentPageProps) {
                   <Badge variant="default" className="bg-primary">
                     🔧 React 组件
                   </Badge>
-                  <span className="text-sm text-muted-foreground">组件预览</span>
+                  <span className="text-sm text-muted-foreground">
+                    组件预览
+                  </span>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => navigator.clipboard.writeText(component.code || "")}
+                  onClick={() =>
+                    navigator.clipboard.writeText(component.code || "")
+                  }
                   className="gap-2 h-8"
                 >
                   <Copy className="h-3 w-3" />
@@ -149,10 +155,8 @@ export default function ComponentPage({ params }: ComponentPageProps) {
               </div>
             </div>
             <div className="p-4">
-              <div className="border rounded-lg bg-white overflow-hidden">
-                <div className="h-[500px] overflow-auto">
-                  <ComponentPreview component={component} />
-                </div>
+              <div className="h-[400px] overflow-auto">
+                <ComponentPreview component={component} />
               </div>
             </div>
           </div>
@@ -166,5 +170,5 @@ export default function ComponentPage({ params }: ComponentPageProps) {
         componentName={component.name}
       />
     </>
-  )
+  );
 }

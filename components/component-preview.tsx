@@ -28,15 +28,9 @@ export function ComponentPreview({ component }: ComponentPreviewProps) {
       <Sandpack
         template="react"
         files={files}
-        theme="light"
         options={{
-          showNavigator: false,
-          showTabs: false,
-          showLineNumbers: false,
-          showInlineErrors: true,
           wrapContent: true,
-          editorHeight: 400,
-          layout: "preview", // 只显示预览，不显示编辑器
+          editorHeight: 398,
         }}
       />
     </div>
