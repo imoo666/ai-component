@@ -23,7 +23,6 @@ export function ComponentGrid() {
         setLoading(false)
       }
     }
-
     loadComponents()
   }, [])
 

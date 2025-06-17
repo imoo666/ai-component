@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/breadcrumb"
 import { Send, Bot, Home } from "lucide-react"
 import { ChatMessage } from "@/components/chat-message"
-import { extractComponentFromMessage } from "@/lib/component-parser"
 
 interface Message {
   id: string
@@ -24,6 +23,9 @@ interface Message {
   timestamp: Date
   hasComponent?: boolean
   componentCode?: string
+  isStreaming?: boolean
+  isGenerating?: boolean
+  type?: "chat" | "component"
 }
 
 export default function CreatePage() {
@@ -31,8 +33,10 @@ export default function CreatePage() {
     {
       id: "welcome",
       role: "assistant",
-      content: "你好！我是 AI 组件生成助手。请告诉我你想要创建什么样的组件，我会为你生成相应的 React 代码。",
+      content:
+        "你好！我是 AI 组件生成助手。我可以帮你：\n\n1. 💬 **对话交流** - 回答问题、提供建议\n2. 🔧 **生成组件** - 创建 React 组件代码\n\n请告诉我你想要什么帮助！",
       timestamp: new Date(),
+      type: "chat",
     },
   ])
   const [input, setInput] = useState("")
@@ -48,47 +52,100 @@ export default function CreatePage() {
     }
   }, [messages])
 
+  const detectMessageType = (input: string): "chat" | "component" => {
+    const componentKeywords = [
+      "组件",
+      "component",
+      "按钮",
+      "表单",
+      "卡片",
+      "导航",
+      "布局",
+      "创建",
+      "生成",
+      "写一个",
+      "做一个",
+    ]
+    return componentKeywords.some((keyword) => input.toLowerCase().includes(keyword)) ? "component" : "chat"
+  }
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return
 
+    const messageType = detectMessageType(input)
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
       content: input.trim(),
       timestamp: new Date(),
+      type: messageType,
     }
 
     setMessages((prev) => [...prev, userMessage])
     setInput("")
     setIsLoading(true)
 
-    try {
-      const mockResponse = generateMockResponse(input)
-      const hasComponent = mockResponse.includes("[component]")
-      let componentCode = ""
-
-      if (hasComponent) {
-        componentCode = extractComponentFromMessage(mockResponse)
+    if (messageType === "component") {
+      const loadingMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "",
+        timestamp: new Date(),
+        isGenerating: true,
+        type: "component",
       }
 
-      setTimeout(() => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: (Date.now() + 1).toString(),
-            role: "assistant",
-            content: mockResponse,
-            timestamp: new Date(),
-            hasComponent,
-            componentCode,
-          },
-        ])
-        setIsLoading(false)
-      }, 1000)
-    } catch (error) {
-      console.error("Error:", error)
-      setIsLoading(false)
+      setMessages((prev) => [...prev, loadingMessage])
+
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 2000))
+        const componentCode = generateComponentCode()
+
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === loadingMessage.id
+              ? { ...msg, content: "", hasComponent: true, componentCode, isGenerating: false }
+              : msg,
+          ),
+        )
+      } catch (error) {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === loadingMessage.id
+              ? { ...msg, content: "抱歉，生成组件时出现错误，请重试。", isGenerating: false, type: "chat" }
+              : msg,
+          ),
+        )
+      }
+    } else {
+      const streamingMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "",
+        timestamp: new Date(),
+        isStreaming: true,
+        type: "chat",
+      }
+
+      setMessages((prev) => [...prev, streamingMessage])
+      const response = generateChatResponse(input)
+      await simulateStreamingResponse(response, streamingMessage.id)
     }
+
+    setIsLoading(false)
+  }
+
+  const simulateStreamingResponse = async (fullResponse: string, messageId: string) => {
+    const words = fullResponse.split("")
+    let currentContent = ""
+
+    for (let i = 0; i < words.length; i++) {
+      currentContent += words[i]
+      setMessages((prev) => prev.map((msg) => (msg.id === messageId ? { ...msg, content: currentContent } : msg)))
+      await new Promise((resolve) => setTimeout(resolve, 20))
+    }
+
+    setMessages((prev) => prev.map((msg) => (msg.id === messageId ? { ...msg, isStreaming: false } : msg)))
   }
 
   return (
@@ -104,7 +161,7 @@ export default function CreatePage() {
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage>创建组件</BreadcrumbPage>
+              <BreadcrumbPage>AI 助手</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
@@ -113,7 +170,7 @@ export default function CreatePage() {
           <CardHeader className="border-b flex-shrink-0">
             <CardTitle className="flex items-center gap-2">
               <Bot className="h-5 w-5" />
-              AI 组件生成
+              AI 智能助手
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col p-0 min-h-0">
@@ -122,23 +179,12 @@ export default function CreatePage() {
                 {messages.map((message) => (
                   <ChatMessage key={message.id} message={message} />
                 ))}
-                {isLoading && (
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                      <Bot className="h-4 w-4 text-primary-foreground" />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
-                      <span className="text-sm text-muted-foreground">AI 正在思考...</span>
-                    </div>
-                  </div>
-                )}
               </div>
             </ScrollArea>
 
             <div className="border-t p-6 flex-shrink-0 flex gap-3">
               <Input
-                placeholder="描述你想要的组件..."
+                placeholder="输入你的问题或描述想要的组件..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && handleSend()}
@@ -156,11 +202,9 @@ export default function CreatePage() {
   )
 }
 
-function generateMockResponse(input: string): string {
-  return `我来为你创建一个${input}组件。
-
-[component]
-export default function CustomButton({ children, variant = "primary", onClick, disabled = false }) {
+function generateComponentCode(): string {
+  const templates = [
+    `export default function CustomButton({ children, variant = "primary", onClick, disabled = false }) {
   const variants = {
     primary: "bg-blue-600 text-white hover:bg-blue-700",
     secondary: "bg-gray-200 text-gray-900 hover:bg-gray-300",
@@ -176,8 +220,27 @@ export default function CustomButton({ children, variant = "primary", onClick, d
       {children}
     </button>
   )
+}`,
+    `export default function UserCard({ user }) {
+  return (
+    <div className="max-w-sm mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+      <div className="p-6">
+        <div className="flex items-center space-x-4">
+          <img className="w-16 h-16 rounded-full object-cover" src={user.avatar || "/placeholder.svg?height=64&width=64"} alt={user.name} />
+          <div className="flex-1">
+            <h3 className="text-xl font-semibold text-gray-900">{user.name}</h3>
+            <p className="text-gray-600">{user.role}</p>
+            <p className="text-sm text-gray-500">{user.email}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}`,
+  ]
+  return templates[Math.floor(Math.random() * templates.length)]
 }
-[/component]
 
-这个按钮组件支持多种样式变体，你可以根据需要进行调整。需要我修改什么地方吗？`
+function generateChatResponse(input: string): string {
+  return `关于"${input}"这个问题，我来为你详细解答：\n\n这是一个很好的问题！让我从几个方面来分析：\n\n1. **基本概念**：首先我们需要理解核心概念\n2. **实际应用**：在实际开发中的应用场景\n3. **最佳实践**：推荐的做法和注意事项\n\n希望这个回答对你有帮助！如果还有其他问题，随时可以问我。`
 }

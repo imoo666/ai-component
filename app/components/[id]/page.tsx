@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { ComponentPreview } from "@/components/component-preview"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -13,7 +13,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { Calendar, User, Home, Trash2 } from "lucide-react"
+import { Calendar, User, Home, Trash2, Copy } from "lucide-react"
 import { getComponentById, deleteComponent } from "@/lib/data"
 import { toast } from "sonner"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
@@ -41,13 +41,11 @@ export default function ComponentPage({ params }: ComponentPageProps) {
         setLoading(false)
       }
     }
-
     loadComponent()
   }, [params.id])
 
   const handleConfirmDelete = async () => {
     if (!component) return
-
     setDeleting(true)
     try {
       await deleteComponent(component.id)
@@ -130,14 +128,34 @@ export default function ComponentPage({ params }: ComponentPageProps) {
             </Button>
           </header>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>组件预览</CardTitle>
-            </CardHeader>
-            <CardContent className="border rounded-lg p-8 bg-white min-h-[500px]">
-              <ComponentPreview component={component} />
-            </CardContent>
-          </Card>
+          <div className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent overflow-hidden rounded-lg">
+            <div className="p-4 border-b bg-primary/5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Badge variant="default" className="bg-primary">
+                    🔧 React 组件
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">组件预览</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigator.clipboard.writeText(component.code || "")}
+                  className="gap-2 h-8"
+                >
+                  <Copy className="h-3 w-3" />
+                  复制代码
+                </Button>
+              </div>
+            </div>
+            <div className="p-4">
+              <div className="border rounded-lg bg-white overflow-hidden">
+                <div className="h-[500px] overflow-auto">
+                  <ComponentPreview component={component} />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -20,8 +20,6 @@ const mockComponents: Component[] = [
 }`,
     createdAt: "2024-01-15T10:30:00Z",
     author: "AI Generator",
-    downloads: 156,
-    likes: 23,
   },
   {
     id: "2",
@@ -46,8 +44,6 @@ const mockComponents: Component[] = [
 }`,
     createdAt: "2024-01-14T15:20:00Z",
     author: "AI Generator",
-    downloads: 89,
-    likes: 12,
   },
 ]
 
@@ -60,7 +56,6 @@ function getStoredComponents(): Component[] {
     const stored = localStorage.getItem(STORAGE_KEY)
     return stored ? JSON.parse(stored) : []
   } catch (error) {
-    console.error("Failed to load stored components:", error)
     return []
   }
 }
@@ -80,7 +75,6 @@ function getDeletedMockComponents(): string[] {
     const deleted = localStorage.getItem(DELETED_MOCK_COMPONENTS_KEY)
     return deleted ? JSON.parse(deleted) : []
   } catch (error) {
-    console.error("Failed to load deleted mock components:", error)
     return []
   }
 }
@@ -121,8 +115,6 @@ export async function saveComponent(componentData: {
     id: Date.now().toString(),
     ...componentData,
     createdAt: new Date().toISOString(),
-    downloads: 0,
-    likes: 0,
   }
 
   const storedComponents = getStoredComponents()
@@ -137,11 +129,9 @@ export async function deleteComponent(id: string): Promise<void> {
   const isStoredComponent = storedComponents.some((comp) => comp.id === id)
 
   if (isStoredComponent) {
-    // 删除用户创建的组件
     const updatedComponents = storedComponents.filter((component) => component.id !== id)
     setStoredComponents(updatedComponents)
   } else {
-    // 标记预设组件为已删除
     const deletedMockIds = getDeletedMockComponents()
     if (!deletedMockIds.includes(id)) {
       setDeletedMockComponents([...deletedMockIds, id])
