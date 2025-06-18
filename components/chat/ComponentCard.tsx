@@ -28,14 +28,14 @@ export function ComponentCard({ message }: Props) {
             <Copy className="h-3 w-3 mr-1" />
             复制
           </Button>
-          <Button
+          {/* <Button
             variant="outline"
             size="sm"
             onClick={() => setShowSaveDialog(true)}
           >
             <Save className="h-3 w-3 mr-1" />
             保存
-          </Button>
+          </Button> */}
         </div>
       </div>
       <div className="p-4">

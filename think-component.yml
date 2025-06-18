@@ -1,0 +1,330 @@
+app:
+  description: ''
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  mode: advanced-chat
+  name: think-component
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/siliconflow:0.0.15@775950e2071600bd3ba0415ec306c1b1582bc4a2a94688d642f627d112d87cd3
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/gemini:0.2.4@1dc8cd4a3198584fd7639023951f388fff023caa234a4bdb8bba69d6091c2e64
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        sourceType: llm
+        targetType: answer
+      id: llm-answer
+      source: llm
+      sourceHandle: source
+      target: answer
+      targetHandle: target
+      type: custom
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: question-classifier
+      id: 1750062607895-source-1750063280409-target
+      source: '1750062607895'
+      sourceHandle: source
+      target: '1750063280409'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: llm
+      id: 1750063280409-2-llm-target
+      source: '1750063280409'
+      sourceHandle: '2'
+      target: llm
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: llm
+      id: 1750063280409-1-1750063984440-target
+      source: '1750063280409'
+      sourceHandle: '1'
+      target: '1750063984440'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1750063984440-source-1750064072526-target
+      source: '1750063984440'
+      sourceHandle: source
+      target: '1750064072526'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: 开始
+        type: start
+        variables: []
+      height: 54
+      id: '1750062607895'
+      position:
+        x: 30
+        y: 302
+      positionAbsolute:
+        x: 30
+        y: 302
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: ''
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 10
+        model:
+          completion_params:
+            enable_thinking: false
+          mode: chat
+          name: Qwen/Qwen3-8B
+          provider: langgenius/siliconflow/siliconflow
+        prompt_template:
+        - id: 457b2725-f9a8-4a48-8b26-b17fc2e1a4d3
+          role: system
+          text: '你是一个引导机器人，你有丰富的前端开发经验，你需要一步步引导用户进行 react 组件生成。
+
+
+            - 你只需要和用户详细的讨论需求，不需要进行代码实现
+
+            - 如果用户不想考虑的很详细，则用你的经验来为用户选择一个最简单、最合理的需求列表
+
+            - 代码实现由另一个 api 来做，它将使用 react + ts，类组件，且只支持一个文件
+
+            - 每次和用户讨论需求后，将所有需求要点都重新罗列出来，按 12345... 进行输出，直到用户觉得满意，可以生成组件为止'
+        selected: false
+        title: LLM
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 90
+      id: llm
+      position:
+        x: 638
+        y: 302
+      positionAbsolute:
+        x: 638
+        y: 302
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '{{#llm.text#}}'
+        desc: ''
+        selected: false
+        title: 直接回复
+        type: answer
+        variables: []
+      height: 105
+      id: answer
+      position:
+        x: 942
+        y: 302
+      positionAbsolute:
+        x: 942
+        y: 302
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        classes:
+        - id: '1'
+          name: 已经整理好了全部需求，可以准备生成组件
+        - id: '2'
+          name: 还没讨论或者还没讨论完需求，需要继续讨论
+        desc: ''
+        instructions: ''
+        model:
+          completion_params:
+            enable_thinking: false
+            temperature: 0.7
+          mode: chat
+          name: Qwen/Qwen3-8B
+          provider: langgenius/siliconflow/siliconflow
+        query_variable_selector:
+        - '1750062607895'
+        - sys.query
+        selected: false
+        title: 问题分类器
+        topics: []
+        type: question-classifier
+        vision:
+          enabled: false
+      height: 204
+      id: '1750063280409'
+      position:
+        x: 334
+        y: 302
+      positionAbsolute:
+        x: 334
+        y: 302
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: ''
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 10
+        model:
+          completion_params: {}
+          mode: chat
+          name: gemini-2.5-flash-preview-05-20
+          provider: langgenius/gemini/google
+        prompt_template:
+        - id: 82f35b78-f247-4c60-b154-bc6564178a57
+          role: system
+          text: '你是一个前端组件代码生成器，你需要根据用户的需求，将其实现为可运行的 React 函数组件代码（TSX）。
+
+
+            要求：
+
+            - 使用函数组件，且只能生成一个文件
+
+            - 这个文件需要包含两个部分 1. 导出的组件，注意需要用局部导出 2. 导出的 使用demo，使用默认导出
+
+            - 需要使用行内 style 来写样式，组件的 ui 要现代化和美观
+
+            - 代码中严禁出现反引号`，代码中严禁出现反引号`
+
+            - 只需要返回组件代码，不需要用 markdown 格式输出，不需要其他介绍，只需要代码！
+
+            '
+        selected: false
+        title: LLM 2
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 90
+      id: '1750063984440'
+      position:
+        x: 638
+        y: 447
+      positionAbsolute:
+        x: 638
+        y: 447
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '@component{{#1750063984440.text#}}'
+        desc: ''
+        selected: false
+        title: 直接回复 2
+        type: answer
+        variables: []
+      height: 105
+      id: '1750064072526'
+      position:
+        x: 942
+        y: 447
+      positionAbsolute:
+        x: 942
+        y: 447
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: -450.30591862141875
+      y: -57.21410371372059
+      zoom: 0.8442724799073484
