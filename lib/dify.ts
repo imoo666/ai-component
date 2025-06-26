@@ -1,8 +1,7 @@
 // lib/dify-client.ts
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 
-const DIFY_API_KEY = "app-16pwMCqjufW6L1WEuPQuMhSx";
-// const DIFY_API_KEY = "app-8Ak1YVFN9EEl7SxItYta0fb6";
+const DIFY_API_KEY = "xxxxxx";
 const DIFY_API_URL = "https://api.dify.ai/v1";
 
 interface Props {
